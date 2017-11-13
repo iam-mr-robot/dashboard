@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>script development</title>
+	<script
+	  src="https://code.jquery.com/jquery-3.2.1.min.js"
+	  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+	  crossorigin="anonymous">
+	</script>
+
+	<script type="text/javascript" src="http://momentjs.com/downloads/moment.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment-range/3.0.3/moment-range.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.13.1/lodash.js"></script>
+</head>
+<body>
+	<script type="text/javascript">
+		window['moment-range'].extendMoment(moment);
+
+        function Bucketize (data){
+			var range = moment.range(moment(data.start, "DD/MM/YYYY HH:mm:ss"), moment(data.end, "DD/MM/YYYY HH:mm:ss"));
+			var minutes = Array.from(range.by('minutes', { exclusive: true }));
+			//console.log(minutes.map(m => m.format('DD/MM/YY HH:mm:ss')));
+			var bucketSize = data.pages/minutes.length;
+			var printObj = [];
+			minutes.forEach((key, i) => printObj[i] = {"time": key.format("DD/MM/YYYY HH:mm:ss"), "value": bucketSize});
+			return printObj;
+        }
+
+
+	    $.getJSON("assets/data.json", function(result){
+	        var bucket = [];
+	        result.forEach(function(element){
+	        	bucket = bucket.concat(Bucketize(element));
+	        });
+
+			var result = _(bucket)
+			  .map('time')
+			  .uniq()
+			  .map(key => ({ 
+			    key, 
+			    val: _(bucket).filter({ time: key }).sumBy('value')
+			  }))
+			  .value();
+
+			console.log(result);
+	    });
+
+	</script>
+</body>
+</html>
